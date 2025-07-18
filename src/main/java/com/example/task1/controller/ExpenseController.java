@@ -2,15 +2,22 @@ package com.example.task1.controller;
 
 import com.example.task1.model.Expense;
 import com.example.task1.service.ExpenseService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/expenses")
 public class ExpenseController {
-    @Autowired
-    private ExpenseService expenseService;
+    
+    private final ExpenseService expenseService;
+    
+    public ExpenseController(ExpenseService expenseService) {
+        this.expenseService = expenseService;
+    }
 
     @GetMapping
     public List<Expense> getAllExpenses() {
@@ -18,11 +25,11 @@ public class ExpenseController {
     }
 
     @PostMapping
-    public Expense addExpense(@RequestBody Expense expense) {
-        if (expense.getExpenseDate() == null) {
-            expense.setExpenseDate(java.time.LocalDateTime.now());
-        }
-        return expenseService.addExpense(expense);
+    public ResponseEntity<Map<String, String>> addExpense(@RequestBody Expense expense) {
+        expenseService.addExpense(expense);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Expense created successfully");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @DeleteMapping
