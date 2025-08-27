@@ -1,14 +1,25 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
+# Multi-stage Docker build for React + Spring Boot
 
-# Set the working directory in the container
+# Stage 1: Build React frontend
+FROM node:18-alpine AS frontend-build
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci --only=production
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Build Spring Boot backend
+FROM maven:3.8.6-openjdk-17 AS backend-build
 WORKDIR /app
+COPY pom.xml ./
+COPY src ./src
+# Copy React build to Spring Boot static resources
+COPY --from=frontend-build /app/frontend/build ./src/main/resources/static
+RUN mvn clean package -DskipTests
 
-# Copy the built jar file
-COPY target/task1-0.0.1-SNAPSHOT.jar app.jar
-
-# Expose the port the app runs on
+# Stage 3: Runtime
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY --from=backend-build /app/target/task1-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
-
-# Run the jar file
 ENTRYPOINT ["java", "-jar", "app.jar"] 
