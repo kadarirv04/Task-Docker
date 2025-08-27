@@ -9,8 +9,12 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Spring Boot backend
-FROM maven:3.9-openjdk-17 AS backend-build
+FROM eclipse-temurin:17-jdk AS backend-build
 WORKDIR /app
+
+# Install Maven
+RUN apt-get update && apt-get install -y maven
+
 COPY pom.xml ./
 COPY src ./src
 # Copy React build to Spring Boot static resources
